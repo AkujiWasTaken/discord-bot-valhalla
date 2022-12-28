@@ -8,6 +8,6 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages),
     async execute(interaction){
         // if you need to access your client instance from inside a command file, we can do this by using interaction.client
-        await interaction.reply('pong');
+        await interaction.reply(`Ping`);
     },
 };
