@@ -2,7 +2,6 @@ const fs = require('node:fs'); // fs is a native module and is used to read the 
 const path = require('node:path'); // path is nodes native path utility module. helps us construct our paths to access files and directories
 // path automatically detects the operating system and uses appropriate joiners
 
-// Require the necessary discord.js classes
 const {Client, AuditLogEvent, Events, GatewayIntentBits, Collection} = require("discord.js");
 const {token} = require("./config.json");
 
@@ -28,7 +27,7 @@ for (const file of commandFiles){
     }
 }
 // when the client is ready, run this code (once)
-// we use 'c' for the event parameter to keep it seperate from the already defined client
+// we use 'c' for the event parameter to keep it seperate from the already defined client to stop any issues occurring
 client.once(Events.ClientReady, c => {
     console.log(`Ready and logged in as ${c.user.tag}`);
 });
@@ -68,33 +67,6 @@ client.on('interactionCreate', async interaction => {
 	}
 });
 
-client.on(Events.MessageDelete, async message => {
-    // Ignore if it's direct messages
-    if(!message.guild) return;
-    const fetchedLogs = await message.guild.fetchAuditLogs({
-        limit: 1,
-        type: AuditLogEvent.MessageDelete,
-    });
-
-    // since there's only 1 audit log entry in this collection, grab the first one
-    const deletionLog = fetchedLogs.entries.first();
-
-    // perform a coherence check to make sure there's something
-    if(!deletionLog) return console.log(`A message by ${message.author.tag} was deleted, but there was no relevant audit`);
-
-
-    // now grab the user object of the person who deleted the message
-    // also grab the target of this action to double-check
-    const { executor, target } = deletionLog;
-
-    // update the output with more information
-    // also run a check to make sure the log returned was for the authors message
-    if(target.id === message.author.id){
-        console.log(`A message by: ${message.author.tag} was deleted by: ${executor.tag}`);  
-    } else{
-        console.log(`A message by: ${message.author.tag} was deleted, but the deleting party is unknown`);
-    }
-});
 
 let statuses = [ // making an array to iterate over
     "/help",
