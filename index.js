@@ -3,12 +3,11 @@ const path = require('node:path'); // path is nodes native path utility module. 
 // path automatically detects the operating system and uses appropriate joiners
 
 // Require the necessary discord.js classes
-const {Client, Events, GatewayIntentBits, Collection} = require("discord.js");
+const {Client, AuditLogEvent, Events, GatewayIntentBits, Collection} = require("discord.js");
 const {token} = require("./config.json");
 
 // Create a new client instance
 const client = new Client({intents: [GatewayIntentBits.Guilds]});
-
 
 client.commands = new Collection(); // collections extends js native map class and includes more extensive useful functionality, collection is used to store and efficiently retrieve commands for execution
 
@@ -50,10 +49,57 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 });
 
+client.on('interactionCreate', async interaction => {
+	if (interaction.isChatInputCommand()) {
+		// command handling
+	} else if (interaction.isAutocomplete()) {
+		const command = interaction.client.commands.get(interaction.commandName);
+
+		if (!command) {
+			console.error(`No command matching ${interaction.commandName} was found.`);
+			return;
+		}
+
+		try {
+			await command.autocomplete(interaction);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+});
+
+client.on(Events.MessageDelete, async message => {
+    // Ignore if it's direct messages
+    if(!message.guild) return;
+    const fetchedLogs = await message.guild.fetchAuditLogs({
+        limit: 1,
+        type: AuditLogEvent.MessageDelete,
+    });
+
+    // since there's only 1 audit log entry in this collection, grab the first one
+    const deletionLog = fetchedLogs.entries.first();
+
+    // perform a coherence check to make sure there's something
+    if(!deletionLog) return console.log(`A message by ${message.author.tag} was deleted, but there was no relevant audit`);
+
+
+    // now grab the user object of the person who deleted the message
+    // also grab the target of this action to double-check
+    const { executor, target } = deletionLog;
+
+    // update the output with more information
+    // also run a check to make sure the log returned was for the authors message
+    if(target.id === message.author.id){
+        console.log(`A message by: ${message.author.tag} was deleted by: ${executor.tag}`);  
+    } else{
+        console.log(`A message by: ${message.author.tag} was deleted, but the deleting party is unknown`);
+    }
+});
+
 let statuses = [ // making an array to iterate over
     "/help",
     "/server",
-    "/user",
+    "/help",
 ]
 client.on("ready", () => {
     // run every 5 seconds
